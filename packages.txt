@@ -1,1 +1,2 @@
-python3-distutils
+libjpeg-dev
+zlib1g-dev
