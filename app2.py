@@ -3,12 +3,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Load dataset
-file_path = 'Sample_Company_Sustainability_Metrics_Dataset.csv'
-data = pd.read_csv(file_path)
+# --- Load Dataset ---
+@st.cache
+def load_data(file_path):
+    return pd.read_csv(file_path)
 
-# Rename columns if needed for consistency
-data = data.rename(columns={
+file_path = 'Sample_Company_Sustainability_Metrics_Dataset.csv'
+data = load_data(file_path)
+
+# --- Rename Columns ---
+column_rename = {
     'Local Business Engagement Rate': 'Local Business Engagement Rate (%)',
     'Remote Worker Attraction Rate': 'Remote Worker Attraction Rate (%)',
     'Waste Development Rate': 'Waste Development Rate (tons/year)',
@@ -18,15 +22,20 @@ data = data.rename(columns={
     'Share, Resale': 'Share/Resale Rate (%)',
     'Circular Credibility': 'Circular Credibility Score',
     'Value of Waste': 'Value of Waste (EUR)'
-})
+}
 
-# Convert columns to percentages if needed
-data['Local Business Engagement Rate (%)'] *= 100
-data['Remote Worker Attraction Rate (%)'] *= 100
-data['End of Life Score'] *= 100
-data['Circular Credibility Score'] *= 100
+data = data.rename(columns=column_rename)
 
-# Define weights for each metric (customize these based on importance)
+# --- Convert Columns to Percentages ---
+percentage_columns = [
+    'Local Business Engagement Rate (%)', 'Remote Worker Attraction Rate (%)', 
+    'End of Life Score', 'Circular Credibility Score'
+]
+
+for column in percentage_columns:
+    data[column] *= 100
+
+# --- Define Weights for Metrics ---
 weights = {
     'Sustainability Impact Score': 0.15,
     'Local Business Engagement Rate (%)': 0.10,
@@ -41,41 +50,33 @@ weights = {
     'Value of Waste (EUR)': 0.10
 }
 
-# Calculate the weighted score for each company
-data['Sustainability Score'] = (
-    data['Sustainability Impact Score'] * weights['Sustainability Impact Score'] +
-    data['Local Business Engagement Rate (%)'] * weights['Local Business Engagement Rate (%)'] +
-    data['Remote Worker Attraction Rate (%)'] * weights['Remote Worker Attraction Rate (%)'] +
-    data['Waste Development Rate (tons/year)'] * weights['Waste Development Rate (tons/year)'] +
-    data['Emission Rate of Pollutant (kg)'] * weights['Emission Rate of Pollutant (kg)'] +
-    data['Regenerating High Value Material (%)'] * weights['Regenerating High Value Material (%)'] +
-    data['Extend Product Life (years)'] * weights['Extend Product Life (years)'] +
-    data['Share/Resale Rate (%)'] * weights['Share/Resale Rate (%)'] +
-    data['End of Life Score'] * weights['End of Life Score'] +
-    data['Circular Credibility Score'] * weights['Circular Credibility Score'] +
-    data['Value of Waste (EUR)'] * weights['Value of Waste (EUR)']
-)
+# --- Calculate Sustainability Score ---
+def calculate_sustainability_score(row, weights):
+    score = sum(row[column] * weight for column, weight in weights.items())
+    return score
 
-# Streamlit interface
+data['Sustainability Score'] = data.apply(calculate_sustainability_score, axis=1, weights=weights)
+
+# --- Streamlit Interface ---
 st.title("Filter In! Jobs In!")
 st.write("This app ranks companies based on an overall sustainability score calculated from various metrics.")
 
-# SIS Range Filter in Sidebar
+# --- SIS Range Filter in Sidebar ---
 st.sidebar.header("Set Sustainability Score (SIS) Range")
-min_sis = st.sidebar.slider("Minimum SIS", float(data['Sustainability Score'].min()), float(data['Sustainability Score'].min()), float(data['Sustainability Score'].max()))
+min_sis = st.sidebar.slider("Minimum SIS", float(data['Sustainability Score'].min()), float(data['Sustainability Score'].max()), float(data['Sustainability Score'].min()))
 max_sis = st.sidebar.slider("Maximum SIS", float(data['Sustainability Score'].min()), float(data['Sustainability Score'].max()), float(data['Sustainability Score'].max()))
 
-# Filter companies within the selected SIS range
+# --- Filter Data Based on SIS Range ---
 filtered_data = data[(data['Sustainability Score'] >= min_sis) & (data['Sustainability Score'] <= max_sis)]
 filtered_data = filtered_data.sort_values(by='Sustainability Score', ascending=False)
 
-# Display qualifying companies based on SIS threshold
+# --- Display Qualifying Companies ---
 st.subheader("Qualifying Companies")
 if not filtered_data.empty:
     st.success("Ready for some current success? These companies are ready to flow into our county’s spotlight!")
     st.table(filtered_data[['Company', 'Sustainability Score']])
     
-    # Bar chart for qualifying companies
+    # Bar Chart for Qualifying Companies
     st.subheader("Sustainability Score for Qualifying Companies")
     fig, ax = plt.subplots(figsize=(10, 6))
     sns.barplot(x='Sustainability Score', y='Company', data=filtered_data, ax=ax, palette='viridis')
@@ -86,15 +87,13 @@ if not filtered_data.empty:
 else:
     st.warning("Looks like we’re in a bit of a sustainability drought—let's water those thresholds and try again!")
 
-# Detailed information section
+# --- Detailed Information Section ---
 st.subheader("View Detailed Company Information")
 selected_company = st.selectbox("Select a Company for Details", data['Company'].unique())
 
-# Display detailed information for the selected company
 company_details = data[data['Company'] == selected_company]
-
 if not company_details.empty:
     st.write(f"**Detailed Metrics for {selected_company}**")
-    st.table(company_details.T)  # Transpose for readability in Streamlit
+    st.table(company_details.T)  # Transpose for better readability
 else:
     st.warning("No data available for the selected company.")
