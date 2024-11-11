@@ -3,49 +3,35 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Use st.cache_data for caching data loading
-@st.cache_data
-def load_data():
-    # Load dataset
-    file_path = 'Sample_Company_Sustainability_Metrics_Dataset.csv'
-    data = pd.read_csv(file_path)
-    
-    # Rename columns if needed for consistency
-    data = data.rename(columns={
-        'Local Business Engagement Rate': 'Local Business Engagement Rate (%)',
-        'Remote Worker Attraction Rate': 'Remote Worker Attraction Rate (%)',
-        'Waste Development Rate': 'Waste Development Rate (tons/year)',
-        'Emission Rate of Pollutant per kg': 'Emission Rate of Pollutant (kg)',
-        'Regenerating High Value Material': 'Regenerating High Value Material (%)',
-        'Extend Product Life': 'Extend Product Life (years)',
-        'Share, Resale': 'Share/Resale Rate (%)',
-        'Circular Credibility': 'Circular Credibility Score',
-        'Value of Waste': 'Value of Waste (EUR)'
-    })
-    
-    # Convert columns to percentages if needed
-    data['Local Business Engagement Rate (%)'] *= 100
-    data['Remote Worker Attraction Rate (%)'] *= 100
-    data['End of Life Score'] *= 100
-    data['Circular Credibility Score'] *= 100
+# Load dataset
+file_path = 'Sample_Company_Sustainability_Metrics_Dataset.csv'
+data = pd.read_csv(file_path)
 
-    # Ensure columns are of correct type
-    data['Sustainability Impact Score'] = pd.to_numeric(data['Sustainability Impact Score'], errors='coerce')
-    data['Local Business Engagement Rate (%)'] = pd.to_numeric(data['Local Business Engagement Rate (%)'], errors='coerce')
-    data['Remote Worker Attraction Rate (%)'] = pd.to_numeric(data['Remote Worker Attraction Rate (%)'], errors='coerce')
-    data['Waste Development Rate (tons/year)'] = pd.to_numeric(data['Waste Development Rate (tons/year)'], errors='coerce')
-    data['Emission Rate of Pollutant (kg)'] = pd.to_numeric(data['Emission Rate of Pollutant (kg)'], errors='coerce')
-    data['Regenerating High Value Material (%)'] = pd.to_numeric(data['Regenerating High Value Material (%)'], errors='coerce')
-    data['Extend Product Life (years)'] = pd.to_numeric(data['Extend Product Life (years)'], errors='coerce')
-    data['Share/Resale Rate (%)'] = pd.to_numeric(data['Share/Resale Rate (%)'], errors='coerce')
-    data['End of Life Score'] = pd.to_numeric(data['End of Life Score'], errors='coerce')
-    data['Circular Credibility Score'] = pd.to_numeric(data['Circular Credibility Score'], errors='coerce')
-    data['Value of Waste (EUR)'] = pd.to_numeric(data['Value of Waste (EUR)'], errors='coerce')
+# Rename columns if needed for consistency
+data = data.rename(columns={
+    'Local Business Engagement Rate': 'Local Business Engagement Rate (%)',
+    'Remote Worker Attraction Rate': 'Remote Worker Attraction Rate (%)',
+    'Waste Development Rate': 'Waste Development Rate (tons/year)',
+    'Emission Rate of Pollutant per kg': 'Emission Rate of Pollutant (kg)',
+    'Regenerating High Value Material': 'Regenerating High Value Material (%)',
+    'Extend Product Life': 'Extend Product Life (years)',
+    'Share, Resale': 'Share/Resale Rate (%)',
+    'Circular Credibility': 'Circular Credibility Score',
+    'Value of Waste': 'Value of Waste (EUR)'
+})
 
-    return data
+# Convert columns to percentages if needed
+data['Local Business Engagement Rate (%)'] *= 100
+data['Remote Worker Attraction Rate (%)'] *= 100
+data['End of Life Score'] *= 100
+data['Circular Credibility Score'] *= 100
 
-# Load data with caching
-data = load_data()
+# Ensure consistent column types
+data['Sustainability Score'] = pd.to_numeric(data['Sustainability Score'], errors='coerce')  # Handle non-numeric issues
+data['Company'] = data['Company'].astype(str)  # Ensure 'Company' is a string type
+
+# Handle missing values (NaN) by replacing them with 0 or use a more suitable value
+data.fillna(0, inplace=True)
 
 # Define weights for each metric (customize these based on importance)
 weights = {
