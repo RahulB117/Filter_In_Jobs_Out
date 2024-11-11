@@ -3,39 +3,51 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# --- Load Dataset ---
-@st.cache
-def load_data(file_path):
-    return pd.read_csv(file_path)
+# Use st.cache_data for caching data loading
+@st.cache_data
+def load_data():
+    # Load dataset
+    file_path = 'Sample_Company_Sustainability_Metrics_Dataset.csv'
+    data = pd.read_csv(file_path)
+    
+    # Rename columns if needed for consistency
+    data = data.rename(columns={
+        'Local Business Engagement Rate': 'Local Business Engagement Rate (%)',
+        'Remote Worker Attraction Rate': 'Remote Worker Attraction Rate (%)',
+        'Waste Development Rate': 'Waste Development Rate (tons/year)',
+        'Emission Rate of Pollutant per kg': 'Emission Rate of Pollutant (kg)',
+        'Regenerating High Value Material': 'Regenerating High Value Material (%)',
+        'Extend Product Life': 'Extend Product Life (years)',
+        'Share, Resale': 'Share/Resale Rate (%)',
+        'Circular Credibility': 'Circular Credibility Score',
+        'Value of Waste': 'Value of Waste (EUR)'
+    })
+    
+    # Convert columns to percentages if needed
+    data['Local Business Engagement Rate (%)'] *= 100
+    data['Remote Worker Attraction Rate (%)'] *= 100
+    data['End of Life Score'] *= 100
+    data['Circular Credibility Score'] *= 100
 
-file_path = 'Sample_Company_Sustainability_Metrics_Dataset.csv'
-data = load_data(file_path)
+    # Ensure columns are of correct type
+    data['Sustainability Impact Score'] = pd.to_numeric(data['Sustainability Impact Score'], errors='coerce')
+    data['Local Business Engagement Rate (%)'] = pd.to_numeric(data['Local Business Engagement Rate (%)'], errors='coerce')
+    data['Remote Worker Attraction Rate (%)'] = pd.to_numeric(data['Remote Worker Attraction Rate (%)'], errors='coerce')
+    data['Waste Development Rate (tons/year)'] = pd.to_numeric(data['Waste Development Rate (tons/year)'], errors='coerce')
+    data['Emission Rate of Pollutant (kg)'] = pd.to_numeric(data['Emission Rate of Pollutant (kg)'], errors='coerce')
+    data['Regenerating High Value Material (%)'] = pd.to_numeric(data['Regenerating High Value Material (%)'], errors='coerce')
+    data['Extend Product Life (years)'] = pd.to_numeric(data['Extend Product Life (years)'], errors='coerce')
+    data['Share/Resale Rate (%)'] = pd.to_numeric(data['Share/Resale Rate (%)'], errors='coerce')
+    data['End of Life Score'] = pd.to_numeric(data['End of Life Score'], errors='coerce')
+    data['Circular Credibility Score'] = pd.to_numeric(data['Circular Credibility Score'], errors='coerce')
+    data['Value of Waste (EUR)'] = pd.to_numeric(data['Value of Waste (EUR)'], errors='coerce')
 
-# --- Rename Columns ---
-column_rename = {
-    'Local Business Engagement Rate': 'Local Business Engagement Rate (%)',
-    'Remote Worker Attraction Rate': 'Remote Worker Attraction Rate (%)',
-    'Waste Development Rate': 'Waste Development Rate (tons/year)',
-    'Emission Rate of Pollutant per kg': 'Emission Rate of Pollutant (kg)',
-    'Regenerating High Value Material': 'Regenerating High Value Material (%)',
-    'Extend Product Life': 'Extend Product Life (years)',
-    'Share, Resale': 'Share/Resale Rate (%)',
-    'Circular Credibility': 'Circular Credibility Score',
-    'Value of Waste': 'Value of Waste (EUR)'
-}
+    return data
 
-data = data.rename(columns=column_rename)
+# Load data with caching
+data = load_data()
 
-# --- Convert Columns to Percentages ---
-percentage_columns = [
-    'Local Business Engagement Rate (%)', 'Remote Worker Attraction Rate (%)', 
-    'End of Life Score', 'Circular Credibility Score'
-]
-
-for column in percentage_columns:
-    data[column] *= 100
-
-# --- Define Weights for Metrics ---
+# Define weights for each metric (customize these based on importance)
 weights = {
     'Sustainability Impact Score': 0.15,
     'Local Business Engagement Rate (%)': 0.10,
@@ -50,33 +62,41 @@ weights = {
     'Value of Waste (EUR)': 0.10
 }
 
-# --- Calculate Sustainability Score ---
-def calculate_sustainability_score(row, weights):
-    score = sum(row[column] * weight for column, weight in weights.items())
-    return score
+# Calculate the weighted score for each company
+data['Sustainability Score'] = (
+    data['Sustainability Impact Score'] * weights['Sustainability Impact Score'] +
+    data['Local Business Engagement Rate (%)'] * weights['Local Business Engagement Rate (%)'] +
+    data['Remote Worker Attraction Rate (%)'] * weights['Remote Worker Attraction Rate (%)'] +
+    data['Waste Development Rate (tons/year)'] * weights['Waste Development Rate (tons/year)'] +
+    data['Emission Rate of Pollutant (kg)'] * weights['Emission Rate of Pollutant (kg)'] +
+    data['Regenerating High Value Material (%)'] * weights['Regenerating High Value Material (%)'] +
+    data['Extend Product Life (years)'] * weights['Extend Product Life (years)'] +
+    data['Share/Resale Rate (%)'] * weights['Share/Resale Rate (%)'] +
+    data['End of Life Score'] * weights['End of Life Score'] +
+    data['Circular Credibility Score'] * weights['Circular Credibility Score'] +
+    data['Value of Waste (EUR)'] * weights['Value of Waste (EUR)']
+)
 
-data['Sustainability Score'] = data.apply(calculate_sustainability_score, axis=1, weights=weights)
-
-# --- Streamlit Interface ---
+# Streamlit interface
 st.title("Filter In! Jobs In!")
 st.write("This app ranks companies based on an overall sustainability score calculated from various metrics.")
 
-# --- SIS Range Filter in Sidebar ---
+# SIS Range Filter in Sidebar
 st.sidebar.header("Set Sustainability Score (SIS) Range")
-min_sis = st.sidebar.slider("Minimum SIS", float(data['Sustainability Score'].min()), float(data['Sustainability Score'].max()), float(data['Sustainability Score'].min()))
+min_sis = st.sidebar.slider("Minimum SIS", float(data['Sustainability Score'].min()), float(data['Sustainability Score'].min()), float(data['Sustainability Score'].max()))
 max_sis = st.sidebar.slider("Maximum SIS", float(data['Sustainability Score'].min()), float(data['Sustainability Score'].max()), float(data['Sustainability Score'].max()))
 
-# --- Filter Data Based on SIS Range ---
+# Filter companies within the selected SIS range
 filtered_data = data[(data['Sustainability Score'] >= min_sis) & (data['Sustainability Score'] <= max_sis)]
 filtered_data = filtered_data.sort_values(by='Sustainability Score', ascending=False)
 
-# --- Display Qualifying Companies ---
+# Display qualifying companies based on SIS threshold
 st.subheader("Qualifying Companies")
 if not filtered_data.empty:
     st.success("Ready for some current success? These companies are ready to flow into our county’s spotlight!")
     st.table(filtered_data[['Company', 'Sustainability Score']])
     
-    # Bar Chart for Qualifying Companies
+    # Bar chart for qualifying companies
     st.subheader("Sustainability Score for Qualifying Companies")
     fig, ax = plt.subplots(figsize=(10, 6))
     sns.barplot(x='Sustainability Score', y='Company', data=filtered_data, ax=ax, palette='viridis')
@@ -87,13 +107,15 @@ if not filtered_data.empty:
 else:
     st.warning("Looks like we’re in a bit of a sustainability drought—let's water those thresholds and try again!")
 
-# --- Detailed Information Section ---
+# Detailed information section
 st.subheader("View Detailed Company Information")
 selected_company = st.selectbox("Select a Company for Details", data['Company'].unique())
 
+# Display detailed information for the selected company
 company_details = data[data['Company'] == selected_company]
+
 if not company_details.empty:
     st.write(f"**Detailed Metrics for {selected_company}**")
-    st.table(company_details.T)  # Transpose for better readability
+    st.table(company_details.T)  # Transpose for readability in Streamlit
 else:
     st.warning("No data available for the selected company.")
