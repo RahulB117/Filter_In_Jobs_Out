@@ -1,7 +1,7 @@
 pip>=24.3.1
-streamlit==1.25.0
-numpy==1.26.0
-pandas==2.1.1
-matplotlib==3.8.0
-Pillow==8.0.0
-seaborn==0.12.2
+streamlit==1.25.0   # Streamlit version remains the same as it is the latest release
+numpy==1.26.0       # Latest stable version of NumPy
+pandas==2.1.1       # Latest stable version of pandas
+matplotlib==3.8.0   # Latest stable version of Matplotlib
+Pillow==8.0.0       # Pillow version may stay as it is, but if you want the latest, update it
+seaborn==0.12.2     # Latest stable version of Seaborn
