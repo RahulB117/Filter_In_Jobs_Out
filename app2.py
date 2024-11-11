@@ -26,13 +26,6 @@ data['Remote Worker Attraction Rate (%)'] *= 100
 data['End of Life Score'] *= 100
 data['Circular Credibility Score'] *= 100
 
-# Ensure consistent column types
-data['Sustainability Score'] = pd.to_numeric(data['Sustainability Score'], errors='coerce')  # Handle non-numeric issues
-data['Company'] = data['Company'].astype(str)  # Ensure 'Company' is a string type
-
-# Handle missing values (NaN) by replacing them with 0 or use a more suitable value
-data.fillna(0, inplace=True)
-
 # Define weights for each metric (customize these based on importance)
 weights = {
     'Sustainability Impact Score': 0.15,
@@ -83,13 +76,13 @@ if not filtered_data.empty:
     st.table(filtered_data[['Company', 'Sustainability Score']])
     
     # Bar chart for qualifying companies
-    st.subheader("Sustainability Score for Qualifying Companies")
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sns.barplot(x='Sustainability Score', y='Company', data=filtered_data, ax=ax, palette='viridis')
-    ax.set_title("Sustainability Score for Companies within Selected Range")
-    ax.set_xlabel("Sustainability Score")
-    ax.set_ylabel("Company")
-    st.pyplot(fig)
+    #st.subheader("Sustainability Score for Qualifying Companies")
+    #fig, ax = plt.subplots(figsize=(10, 6))
+    #sns.barplot(x='Sustainability Score', y='Company', data=filtered_data, ax=ax, palette='viridis')
+    #ax.set_title("Sustainability Score for Companies within Selected Range")
+    #ax.set_xlabel("Sustainability Score")
+    #ax.set_ylabel("Company")
+    #st.pyplot(fig)
 else:
     st.warning("Looks like we’re in a bit of a sustainability drought—let's water those thresholds and try again!")
 
